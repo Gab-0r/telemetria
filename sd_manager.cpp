@@ -11,8 +11,8 @@ void initialize_sd(){
     }
 }
 
-void mount_drive(FRESULT fr, const TCHAR* fs){
-    fr = f_mount(&fs, "0:", 1);
+void mount_drive(FRESULT fr, FATFS* fs){
+    fr = f_mount(fs, "0:", 1);
     if (fr != FR_OK) {
         printf("No se pudo montar el sistema de archivos. ERROR: (%d)\r\n", fr);
         while (true);
@@ -20,7 +20,7 @@ void mount_drive(FRESULT fr, const TCHAR* fs){
 }
 
 void sd_openfileW(FRESULT fr, FIL* fil, const TCHAR* filename){
-    fr = f_open(&fil, filename, FA_WRITE | FA_CREATE_ALWAYS);
+    fr = f_open(fil, filename, FA_WRITE | FA_CREATE_ALWAYS);
     if (fr != FR_OK) {
         printf("No se puede abrir el archivo. ERROR: (%d)\r\n", fr);
         while (true);

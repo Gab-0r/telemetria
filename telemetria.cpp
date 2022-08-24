@@ -2,6 +2,7 @@
 #include "pico/stdlib.h"
 #include "sd_card.h"
 #include "ff.h"
+#include "sd_manager.h"
 
 int main() {
 
@@ -10,77 +11,38 @@ int main() {
     FIL fil;
     int ret;
     char buf[100];
-    char filename[] = "prueba_oficial.txt";
+    char filename[] = "sdManager_test.txt";
 
-    // Initialize chosen serial port
+    //Inicializar seriales
     stdio_init_all();
 
     sleep_ms(5000);
 
-    // Initialize SD card
-    if (!sd_init_driver()) {
-        printf("ERROR: Could not initialize SD card\r\n");
-        while (true);
-    }
+    // Inicializar tarjeta SD
+    initialize_sd();
 
-    // Mount drive
-    fr = f_mount(&fs, "0:", 1);
-    if (fr != FR_OK) {
-        printf("ERROR: Could not mount filesystem (%d)\r\n", fr);
-        while (true);
-    }
+    //Montar el volumen
+    mount_drive(fr, &fs);
 
-    // Open file for writing ()
-    fr = f_open(&fil, filename, FA_WRITE | FA_CREATE_ALWAYS);
-    if (fr != FR_OK) {
-        printf("ERROR: Could not open file (%d)\r\n", fr);
-        while (true);
-    }
+    //Abrir archivo para escribir
+    sd_openfileW(fr, &fil, filename);
 
-    // Write something to file
-    ret = f_printf(&fil, "Tamo escribiendo en SD\r\n");
-    if (ret < 0) {
-        printf("ERROR: Could not write to file (%d)\r\n", ret);
-        f_close(&fil);
-        while (true);
-    }
-    ret = f_printf(&fil, "HPTA.\r\n");
-    if (ret < 0) {
-        printf("ERROR: Could not write to file (%d)\r\n", ret);
-        f_close(&fil);
-        while (true);
-    }
+    //Escribiendo en el archivo
+    sd_writefile(ret, &fil, "PRUEBITAAAAAAA");
 
-    // Close file
-    fr = f_close(&fil);
-    if (fr != FR_OK) {
-        printf("ERROR: Could not close file (%d)\r\n", fr);
-        while (true);
-    }
+    //Cerrar el archivo
+    sd_closefile(fr, &fil);
 
-    // Open file for reading
-    fr = f_open(&fil, filename, FA_READ);
-    if (fr != FR_OK) {
-        printf("ERROR: Could not open file (%d)\r\n", fr);
-        while (true);
-    }
+    //Abrir el archivo en modo lectura
+    sd_openfileR(fr, &fil, filename);
 
-    // Print every line in file over serial
-    printf("Reading from file '%s':\r\n", filename);
-    printf("---\r\n");
-    while (f_gets(buf, sizeof(buf), &fil)) {
-        printf(buf);
-    }
-    printf("\r\n---\r\n");
+    //Imprimir en serial lo que se lee del archivo
+    sd_printfile(buf, &fil);
 
-    // Close file
-    fr = f_close(&fil);
-    if (fr != FR_OK) {
-        printf("ERROR: Could not close file (%d)\r\n", fr);
-        while (true);
-    }
+    //Cerrar el archivo
+    sd_closefile(fr, &fil);
 
-    // Unmount drive
+    //Desmontar dispositivo
     f_unmount("0:");
 
     // Loop forever doing nothing

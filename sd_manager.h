@@ -4,7 +4,7 @@
 #include "ff.h"
 
 void initialize_sd(void);
-void mount_drive(FRESULT fr, const TCHAR* fs);
+void mount_drive(FRESULT fr, FATFS* fs);
 void sd_openfileW(FRESULT fr, FIL* fil, const TCHAR* filename);
 void sd_writefile(int ret, FIL* fil, const TCHAR* msg);
 void sd_closefile(FRESULT fr, FIL* fil);
