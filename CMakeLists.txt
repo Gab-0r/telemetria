@@ -31,7 +31,7 @@ pico_enable_stdio_uart(telemetria 0)
 pico_enable_stdio_usb(telemetria 1)
 
 # Add the standard library to the build
-target_link_libraries(telemetria pico_stdlib FatFs_SPI)
+target_link_libraries(telemetria pico_stdlib FatFs_SPI hardware_irq hardware_gpio)
 
 pico_add_extra_outputs(telemetria)
 
