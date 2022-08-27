@@ -19,7 +19,7 @@ pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(telemetria telemetria.cpp hw_config.c sd_manager.cpp)
+add_executable(telemetria telemetria.cpp hw_config.c sd_manager.cpp mpuObject.cpp mpu9250.c)
 
 add_subdirectory(lib/no-OS-FatFS-SD-SPI-RPi-Pico/FatFs_SPI build)
 
