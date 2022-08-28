@@ -34,15 +34,15 @@ int main() {
     while(1)
     {
         mpu.updateAngles();  //Uses the object to calculate the angles
-        //mpu.printData();     //Uses the object to print the data
+        mpu.printData();     //Uses the object to print the data
 
-        //Escribiendo datos del acelerometro
-        sprintf(str, "%d,%d,%d\n", mpu.acceleration[0], mpu.acceleration[1], mpu.acceleration[2]);
-        sd_writefile(ret, &fil_acel, str);
+        // //Escribiendo datos del acelerometro
+        // sprintf(str, "%d,%d,%d\n", mpu.acceleration[0], mpu.acceleration[1], mpu.acceleration[2]);
+        // sd_writefile(ret, &fil_acel, str);
 
-        //Escribiendo datos del giroscopio
-        sprintf(str, "%d,%d,%d\n", mpu.gyro[0] - mpu.gyroCal[0], mpu.gyro[1] - mpu.gyroCal[1], mpu.gyro[2] - mpu.gyroCal[2]);
-        sd_writefile(ret, &fil_gyro, str);
+        // //Escribiendo datos del giroscopio
+        // sprintf(str, "%d,%d,%d\n", mpu.gyro[0] - mpu.gyroCal[0], mpu.gyro[1] - mpu.gyroCal[1], mpu.gyro[2] - mpu.gyroCal[2]);
+        // sd_writefile(ret, &fil_gyro, str);
 
         if(gpio_get(interruptPin) == 1){ //Haciendo polling al botón de parar de guardar los datos (PENDIENTE POR INTERRUPCION)
             sys_stop();

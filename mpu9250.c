@@ -60,6 +60,20 @@ void mpu9250_reset()
     cs_select();
     spi_write_blocking(SPI_PORT, buf, 2);
     cs_deselect();
+
+    //Activar el bypass para leer el magnetometro
+    buf[0] = 0x37;
+    buf[1] = 0x02;
+    cs_select();
+    spi_write_blocking(SPI_PORT, buf, 2);
+    cs_deselect();
+
+    //Medición continua del magnetometro
+    buf[0] = 0x0A;
+    buf[1] = 0x02;
+    cs_select();
+    spi_write_blocking(SPI_PORT, buf, 2);
+    cs_deselect();
 }
 
 void read_registers(uint8_t reg, uint8_t *buf, uint16_t len)
@@ -97,6 +111,17 @@ void mpu9250_read_raw_gyro(int16_t gyro[3]) {  //Used to get the raw gyro values
         gyro[i] = (buffer[i * 2] << 8 | buffer[(i * 2) + 1]);;
     }
 }
+
+void mpu9250_read_raw_magneto(int16_t magneto[3]) {  //Leer los valores del magnetometro
+    uint8_t buffer[6];
+
+    read_registers(0x0C, buffer, 6);
+
+    for (int i = 0; i < 3; i++) {
+        magneto[i] = (buffer[i * 2] << 8 | buffer[(i * 2) + 1]);;
+    }
+}
+
 
 void calibrate_gyro(int16_t gyroCal[3], int loop)  //Used to calibrate the gyro. The gyro must be still while calibration happens
 {
