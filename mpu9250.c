@@ -63,8 +63,6 @@ void cs_deselect()
 
 void mpu9250_reset()
 {
-    // Two byte reset. First byte register, second byte data
-    // There are a load more options to set up the device in different ways that could be added here
     uint8_t buf[] = {0x6B, 0x00};
     cs_select();
     spi_write_blocking(SPI_PORT, buf, 2);
@@ -100,10 +98,6 @@ void write_registers(uint8_t reg, uint8_t data){
 
 void read_registers(uint8_t reg, uint8_t *buf, uint16_t len)
 {
-    // For this particular device, we send the device the register we want to read
-    // first, then subsequently read from the device. The register is auto incrementing
-    // so we don't need to keep sending the register we want, just the first.
-
     reg |= READ_BIT;
     cs_select();
     spi_write_blocking(SPI_PORT, &reg, 1);
@@ -112,25 +106,6 @@ void read_registers(uint8_t reg, uint8_t *buf, uint16_t len)
     cs_deselect();
     sleep_ms(10);
 }
-
-// //Función para escribir registros por medio de SPI
-// void write_registers(uint8_t reg, uint8_t data){
-//     cs_select();
-//     spi_write_blocking(SPI_PORT, &reg, 1);
-//     spi_write_blocking(SPI_PORT, &data, 1);
-//     cs_deselect();
-// }
-
-// //Para leer un byte
-// uint8_t read_reg(uint8_t addr){
-//     uint8_t valRead = 0;
-//     cs_select();
-//     spi_write_blocking(SPI_PORT, &addr,1);
-//     spi_read_blocking(SPI_PORT, 0,&valRead, 1);
-//     cs_deselect();
-
-//     return valRead;
-// }
 
 void mpu9250_read_raw_accel(int16_t accel[3]) { //Used to get the raw acceleration values from the mpu
     uint8_t buffer[6];
@@ -174,17 +149,6 @@ void read_magneto_registers(uint8_t reg){
     write_registers(I2C_SLV0_CTRL, 0x86);
     sleep_ms(2);
 }
-
-// uint8_t mpu9250_read_magneto(uint8_t reg){
-//     uint8_t buffer[3];
-//     write_registers(I2C_SLV0_ADDR, AK8963_ADDRESS | READ_FLAG);
-//     write_registers(I2C_SLV0_REG, reg);
-//     write_registers(I2C_SLV0_CTRL, 0x81);
-
-//     sleep_ms(3);
-//     read_registers(EXT_SENS_DATA_00, buffer, 1);
-//     return buffer;
-// }
 
 void calibrate_gyro(int16_t gyroCal[3], int loop)  //Used to calibrate the gyro. The gyro must be still while calibration happens
 {
