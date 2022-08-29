@@ -4,6 +4,7 @@
 #include "hardware/spi.h"
 #include <math.h>
 #include "mpu9250.h"
+#include "macros.h"
 
 /* Example code to talk to a MPU9250 MEMS accelerometer and gyroscope.
    
@@ -68,6 +69,33 @@ void mpu9250_reset()
     cs_select();
     spi_write_blocking(SPI_PORT, buf, 2);
     cs_deselect();
+
+    set_i2C_master();
+}
+
+void set_i2C_master(void){
+    uint8_t readVal;
+
+    //write_registers(, 0x20); //Activar modo I2Cmaster del I2C aux
+    read_registers(WHO_AM_I_MPU9250, &readVal, 1);
+    printf("WHO_AM_I_MPU = %d\n", readVal);
+
+
+    write_registers(USER_CTRL, 0x20); //Activar modo I2Cmaster del I2C aux
+    read_registers(USER_CTRL|READ_BIT, &readVal, 1);
+    printf("USER_CTRL = %d\n", readVal);
+
+    write_registers(I2C_MST_CTRL, 0x0D);//Setear reloj del I2C auxiliar
+    read_registers(I2C_MST_CTRL|READ_BIT, &readVal, 1);
+    printf("I2C_MST_CTRL = %d\n", readVal);
+}
+
+//Función para escribir registros por medio de SPI
+void write_registers(uint8_t reg, uint8_t data){
+    cs_select();
+    spi_write_blocking(SPI_PORT, &reg, 1);
+    spi_write_blocking(SPI_PORT, &data, 1);
+    cs_deselect();
 }
 
 void read_registers(uint8_t reg, uint8_t *buf, uint16_t len)
@@ -123,6 +151,28 @@ void mpu9250_read_raw_gyro(int16_t gyro[3]) {  //Used to get the raw gyro values
     for (int i = 0; i < 3; i++) {
         gyro[i] = (buffer[i * 2] << 8 | buffer[(i * 2) + 1]);;
     }
+}
+
+void mpu9250_read_raw_magneto(int16_t magnetoVals[3]) { //Used to get the raw acceleration values from the mpu
+    uint8_t buffer[6];
+
+    read_magneto_registers(0x03);
+    read_registers(EXT_SENS_DATA_00|READ_BIT, buffer, 3);
+
+    for (int i = 0; i < 3; i++) {
+        magnetoVals[i] = (buffer[i * 2] << 8 | buffer[(i * 2) + 1]);
+    }
+}
+
+void read_magneto_registers(uint8_t reg){
+
+    uint8_t readVal;
+    write_registers(I2C_SLV0_ADDR, AK8963_ADDRESS|READ_FLAG); //Escribir la dirección del magnetometro
+
+    write_registers(I2C_SLV0_REG, reg);
+
+    write_registers(I2C_SLV0_CTRL, 0x86);
+    sleep_ms(2);
 }
 
 // uint8_t mpu9250_read_magneto(uint8_t reg){

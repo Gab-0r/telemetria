@@ -12,6 +12,11 @@ void read_registers(uint8_t reg, uint8_t *buf, uint16_t len);
 //void write_registers(uint8_t reg, uint8_t data);
 //uint8_t read_reg(uint8_t addr);
 
+void set_i2C_master(void);
+void write_registers(uint8_t reg, uint8_t data);
+void mpu9250_read_raw_magneto(int16_t magnetoVals[3]);
+void read_magneto_registers(uint8_t reg);
+
 void mpu9250_read_raw_accel(int16_t accel[3]);
 void mpu9250_read_raw_gyro(int16_t gyro[3]);
 //uint8_t mpu9250_read_magneto(uint8_t reg);
