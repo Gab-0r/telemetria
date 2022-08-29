@@ -6,6 +6,22 @@
 #include "mpuObject.h"
 #include "hardware/gpio.h"
 #include "hardware/irq.h"
+#include "mpu9250.h"
+#include "macros.h"
+
+
+
+#define PIN_MISO 4
+#define PIN_CS 5
+#define PIN_SCK 6
+#define PIN_MOSI 7
+
+#define SPI_PORT spi0
+#define READ_BIT 0x80
+
+
+
+
 
 mpu9250 mpu(100);  //Creates an mpu object
 
@@ -27,27 +43,126 @@ char str[100];
 void sys_init(void);
 void sys_stop();
 
-int main() {
-    sys_init();//Inicialización del sistema
-    sd_openfileW(fr, &fil_acel, filename);
-    sd_openfileW(fr, &fil_gyro, filename2);
-    while(1)
-    {
-        mpu.updateAngles();  //Uses the object to calculate the angles
-        //mpu.printData();     //Uses the object to print the data
 
-        //Escribiendo datos del acelerometro
-        sprintf(str, "%d,%d,%d\n", mpu.acceleration[0], mpu.acceleration[1], mpu.acceleration[2]);
-        sd_writefile(ret, &fil_acel, str);
+void cs_select()
+{
+    asm volatile("nop \n nop \n nop");
+    gpio_put(PIN_CS, 0); // Active low
+    asm volatile("nop \n nop \n nop");
+}
 
-        //Escribiendo datos del giroscopio
-        sprintf(str, "%d,%d,%d\n", mpu.gyro[0] - mpu.gyroCal[0], mpu.gyro[1] - mpu.gyroCal[1], mpu.gyro[2] - mpu.gyroCal[2]);
-        sd_writefile(ret, &fil_gyro, str);
+void cs_deselect()
+{
+    asm volatile("nop \n nop \n nop");
+    gpio_put(PIN_CS, 1);
+    asm volatile("nop \n nop \n nop");
+}
 
-        if(gpio_get(interruptPin) == 1){ //Haciendo polling al botón de parar de guardar los datos (PENDIENTE POR INTERRUPCION)
-            sys_stop();
-        }   
+
+
+//Función para escribir registros por medio de SPI
+void write_registers(uint8_t reg, uint8_t data){
+    cs_select();
+    spi_write_blocking(SPI_PORT, &reg, 1);
+    spi_write_blocking(SPI_PORT, &data, 1);
+    cs_deselect();
+}
+
+//Para leer un byte
+uint8_t read_reg(uint8_t addr){
+    uint8_t valRead = 0;
+    cs_select();
+    spi_write_blocking(SPI_PORT, &addr,1);
+    sleep_ms(10);
+    spi_read_blocking(SPI_PORT, 0,&valRead, 1);
+    cs_deselect();
+    sleep_ms(10);
+
+    return valRead;
+}
+
+void read_registers(uint8_t reg, uint8_t *buf, uint16_t len)
+{
+    // For this particular device, we send the device the register we want to read
+    // first, then subsequently read from the device. The register is auto incrementing
+    // so we don't need to keep sending the register we want, just the first.
+
+    reg |= READ_BIT;
+    cs_select();
+    spi_write_blocking(SPI_PORT, &reg, 1);
+    sleep_ms(10);
+    spi_read_blocking(SPI_PORT, 0, buf, len);
+    cs_deselect();
+    sleep_ms(10);
+}
+
+void read_magneto_registers(uint8_t reg){
+
+    uint8_t readVal;
+    write_registers(I2C_SLV0_ADDR, AK8963_ADDRESS|READ_FLAG); //Escribir la dirección del magnetometro
+
+    write_registers(I2C_SLV0_REG, reg);
+
+    write_registers(I2C_SLV0_CTRL, 0x86);
+    sleep_ms(2);
+}
+
+void mpu9250_read_magneto(int16_t magnetoVals[3]) { //Used to get the raw acceleration values from the mpu
+    uint8_t buffer[6];
+
+    // Start reading acceleration registers from register 0x3B for 6 bytes
+    read_magneto_registers(0x03);
+    read_registers(EXT_SENS_DATA_00|READ_BIT, buffer, 3);
+
+    for (int i = 0; i < 3; i++) {
+        magnetoVals[i] = (buffer[i * 2] << 8 | buffer[(i * 2) + 1]);
     }
+}
+
+int main() {
+    int16_t magnetoVals[3];
+    sys_init();//Inicialización del sistema
+    //sd_openfileW(fr, &fil_acel, filename);
+    //sd_openfileW(fr, &fil_gyro, filename2);
+    uint8_t readVal;
+
+    //write_registers(, 0x20); //Activar modo I2Cmaster del I2C aux
+    read_registers(WHO_AM_I_MPU9250, &readVal, 1);
+    printf("WHO_AM_I_MPU = %d\n", readVal);
+
+
+    write_registers(USER_CTRL, 0x20); //Activar modo I2Cmaster del I2C aux
+    readVal = read_reg(USER_CTRL|READ_BIT);
+    printf("USER_CTRL = %d\n", readVal);
+
+    write_registers(I2C_MST_CTRL, 0x0D);//Setear reloj del I2C auxiliar
+    readVal = read_reg(I2C_MST_CTRL|READ_BIT);
+    printf("I2C_MST_CTRL = %d\n", readVal);
+
+   
+    while(1){
+        mpu9250_read_magneto(magnetoVals);
+        printf("%d, %d, %d\n", magnetoVals[0], magnetoVals[1], magnetoVals[2]);
+        sleep_ms(10);
+    }
+    // {
+    //     mpu.updateAngles();  //Uses the object to calculate the angles
+    //     //mpu.printData();     //Uses the object to print the data
+
+    //     //Escribiendo datos del acelerometro
+    //     sprintf(str, "%d,%d,%d\n", mpu.acceleration[0], mpu.acceleration[1], mpu.acceleration[2]);
+    //     sd_writefile(ret, &fil_acel, str);
+
+    //     //Escribiendo datos del giroscopio
+    //     sprintf(str, "%d,%d,%d\n", mpu.gyro[0] - mpu.gyroCal[0], mpu.gyro[1] - mpu.gyroCal[1], mpu.gyro[2] - mpu.gyroCal[2]);
+    //     sd_writefile(ret, &fil_gyro, str);
+
+    //     if(gpio_get(interruptPin) == 1){ //Haciendo polling al botón de parar de guardar los datos (PENDIENTE POR INTERRUPCION)
+    //         sys_stop();
+    //     }  
+    // }
+
+    
 }
 
 void sys_init(void){
@@ -58,16 +173,16 @@ void sys_init(void){
     //Delay
     sleep_ms(6000);
     //Inicializar todo el apartado de la SD
-    initialize_sd();
-    mount_drive(fr, &fs);
+    // initialize_sd();
+    // mount_drive(fr, &fs);
     
 }
 
 void sys_stop(){
-    sd_closefile(fr, &fil_acel);
-    sd_closefile(fr, &fil_gyro);
-    gpio_put(PICO_DEFAULT_LED_PIN, 1);
-    printf("Datos escritos");
-    while (1);
+    // sd_closefile(fr, &fil_acel);
+    // sd_closefile(fr, &fil_gyro);
+    // gpio_put(PICO_DEFAULT_LED_PIN, 1);
+    // printf("Datos escritos");
+    // while (1);
 }
 

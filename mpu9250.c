@@ -30,6 +30,14 @@
    using of I2C names
 */
 
+//Para acceder al magnetometro
+#define I2C_SLV0_ADDR       0x25
+#define I2C_SLV0_REG        0x26
+#define I2C_SLV0_CTRL       0x27
+#define AK8963_ADDRESS      0x0C
+#define READ_FLAG           0x80
+#define EXT_SENS_DATA_00    0x49
+
 #define PIN_MISO 4
 #define PIN_CS 5
 #define PIN_SCK 6
@@ -77,6 +85,25 @@ void read_registers(uint8_t reg, uint8_t *buf, uint16_t len)
     sleep_ms(10);
 }
 
+// //Función para escribir registros por medio de SPI
+// void write_registers(uint8_t reg, uint8_t data){
+//     cs_select();
+//     spi_write_blocking(SPI_PORT, &reg, 1);
+//     spi_write_blocking(SPI_PORT, &data, 1);
+//     cs_deselect();
+// }
+
+// //Para leer un byte
+// uint8_t read_reg(uint8_t addr){
+//     uint8_t valRead = 0;
+//     cs_select();
+//     spi_write_blocking(SPI_PORT, &addr,1);
+//     spi_read_blocking(SPI_PORT, 0,&valRead, 1);
+//     cs_deselect();
+
+//     return valRead;
+// }
+
 void mpu9250_read_raw_accel(int16_t accel[3]) { //Used to get the raw acceleration values from the mpu
     uint8_t buffer[6];
 
@@ -97,6 +124,17 @@ void mpu9250_read_raw_gyro(int16_t gyro[3]) {  //Used to get the raw gyro values
         gyro[i] = (buffer[i * 2] << 8 | buffer[(i * 2) + 1]);;
     }
 }
+
+// uint8_t mpu9250_read_magneto(uint8_t reg){
+//     uint8_t buffer[3];
+//     write_registers(I2C_SLV0_ADDR, AK8963_ADDRESS | READ_FLAG);
+//     write_registers(I2C_SLV0_REG, reg);
+//     write_registers(I2C_SLV0_CTRL, 0x81);
+
+//     sleep_ms(3);
+//     read_registers(EXT_SENS_DATA_00, buffer, 1);
+//     return buffer;
+// }
 
 void calibrate_gyro(int16_t gyroCal[3], int loop)  //Used to calibrate the gyro. The gyro must be still while calibration happens
 {
