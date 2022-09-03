@@ -8,6 +8,9 @@
 #include "hardware/irq.h"
 #include "mpu9250.h"
 #include "macros.h"
+extern "C"{
+    #include "nrf24_driver.h"
+}
 
 #define PIN_MISO 4
 #define PIN_CS 5
@@ -44,6 +47,10 @@ void sys_stop();
 int main() {
     int16_t magnetoVals[3];
     sys_init();//Inicialización del sistema
+
+
+
+
     sd_openfileW(fr, &fil_acel, filename);
     sd_openfileW(fr, &fil_gyro, filename2);
     sd_openfileW(fr, &fil_magnet, filename3);

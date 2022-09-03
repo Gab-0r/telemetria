@@ -22,6 +22,7 @@ pico_sdk_init()
 add_executable(telemetria telemetria.cpp hw_config.c sd_manager.cpp mpuObject.cpp mpu9250.c)
 
 add_subdirectory(lib/no-OS-FatFS-SD-SPI-RPi-Pico/FatFs_SPI build)
+add_subdirectory(lib/pico-nrf24/lib/nrf24l01)
 
 
 pico_set_program_name(telemetria "telemetria")
@@ -31,7 +32,7 @@ pico_enable_stdio_uart(telemetria 0)
 pico_enable_stdio_usb(telemetria 1)
 
 # Add the standard library to the build
-target_link_libraries(telemetria pico_stdlib FatFs_SPI hardware_irq hardware_gpio)
+target_link_libraries(telemetria pico_stdlib FatFs_SPI hardware_irq hardware_gpio nrf24_driver)
 
 pico_add_extra_outputs(telemetria)
 
