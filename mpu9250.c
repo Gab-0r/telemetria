@@ -39,10 +39,10 @@
 #define READ_FLAG           0x80
 #define EXT_SENS_DATA_00    0x49
 
-#define PIN_MISO 4
-#define PIN_CS 5
-#define PIN_SCK 6
-#define PIN_MOSI 7
+#define PIN_MISO 16
+#define PIN_CS 17
+#define PIN_SCK 18
+#define PIN_MOSI 19
 
 #define SPI_PORT spi0
 #define READ_BIT 0x80
